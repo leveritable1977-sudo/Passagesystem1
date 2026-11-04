@@ -1,0 +1,10 @@
+# Byggmappar och binärer
+build/
+bin/
+*.o
+*.exe
+*.out
+
+# Systemfiler
+.DS_Store
+Thumbs.d
