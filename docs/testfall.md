@@ -1,10 +1,23 @@
 
-Testprotokoll – Testfall och verifiering
+
+Här är hur hela TC-01 ser ut när vi väver in funktionsdeklarationen:
+
 TC-01 – Specialfall: Kortnummer med inledande nollor
-Krav: REQ 01, REQ 02, REQ 03 och REQ 07.
+Krav: REQ 01, REQ 02, REQ 03, REQ 05 och REQ 07.
 
-Test / Indata: Ett kort registreras med kortnummer "00123", behörighet 1 och datum "2026-11-08".
+Design / Funktion (Funktionskontrakt):
+Följande funktioner används för att implementera och testa kravet utan globala variabler (REQ 05):
 
-Förväntat resultat: Programmet ska spara och visa kortnumret exakt som "00123". De inledande nollorna får inte försvinna eller ändras. Även behörighet och datum ska visas korrekt.
 
-Syfte: Testet kontrollerar att kortnumret lagras som text och inte omvandlas till ett heltal. Det säkerställer att REQ 01 uppfylls.
+
+// REQ 07 & REQ 05: Visar samtliga kort 
+void list_cards();
+Test / Indata:
+Funktionen register_card() anropas med kortnummer "00123", behörighet 1 och datum "2026-11-08". Därefter anropas list_cards() för att skriva ut informationen.
+
+Förväntat resultat:
+Programmet ska spara och visa kortnumret exakt som "00123". Även behörighet (1) och datum ("2026-11-08") ska visas korrekt.
+
+
+Syfte:
+Testet kontrollerar att funktionskontraktet hanterar kortnumret som text och inte omvandlar det till ett heltal, vilket säkerställer att REQ 01 och REQ 05 uppfylls.
