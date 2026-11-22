@@ -1,10 +1,14 @@
 #ifndef PASSERKORT_H
 #define PASSERKORT_H
 
+typedef enum {
+    BEHORIGHET_INGEN = 0,
+    BEHORIGHET_AKTIV = 1
+} Behorighet;
+
 typedef struct {
-    char kortnummer[10];
-    char behorighet;
-    char datum[11];
+    char kortnummer[20];
+    Behorighet behorighet;
+    char datum[20];
 } Passerkort;
 
-#endif
