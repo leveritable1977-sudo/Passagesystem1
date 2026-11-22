@@ -1,79 +1,67 @@
 
-1. Kravspecifikation
-Req 01 – Kortnummer som text
 
-Kortnummer ska lagras som text för att bevara eventuella inledande nollor, exempelvis "00123".
+Kravspecifikation – Passagesystem (passagesystem)
+1. Syfte och omfattning
+Detta dokument beskriver kraven för ett modulärt passagesystem skrivet i C. Systemet hanterar registrerade passerkort, behörighetskontroller, dörrstyrning med statuslampa samt filpersistens i cards.dat utan globala variabler.
 
-Req 02 – Kortinnehåll
+2. Funktionella och icke-funktionella krav
+REQ 01 – Kortnummer som text
+Kortnummer ska lagras som text (char[]) för att bevara eventuella inledande nollor, till exempel "00123".
 
-Varje kort ska innehålla information om kortnummer, behörighet och datum.
+REQ 02 – Kortinnehåll
+Varje kort ska innehålla information om kortnummer, behörighet och registreringsdatum.
 
-Req 03 – Textlängder
+REQ 03 – Textlängder
+Textfält ska ha bestämda maxlängder (CARD_ID_MAX, DATE_MAX) för att undvika buffertspill och säkerställa att minnesgränser inte överskrids.
 
-Textfält ska ha bestämda maxlängder för att undvika att minnesgränser överskrids.
+REQ 04 – Structs
+Programmet ska använda struct för att organisera informationen om varje kort (Card) samt systemets övergripande tillstånd (AccessSystem).
 
-Req 04 – Structs
+REQ 05 – Inga globala variabler
+Programmet ska inte använda globala variabler. Systemets tillstånd ska hanteras lokalt i main() och skickas mellan funktioner via parametrar och pekare (AccessSystem *sys och const AccessSystem *sys). const ska användas när data endast behöver läsas.
 
-Programmet ska använda struct för att organisera informationen om varje kort i en gemensam datastruktur.
+REQ 06 – Öppna dörren på distans
+Programmet ska kunna öppna dörren på distans via ett menyval. Funktionerna skriver ut statuslampan (GRÖN, SLÄCKT) och använder sleep för att simulera att dörren är öppen innan den återgår till släckt läge.
 
-Req 05 – Inga globala variabler
+REQ 07 – Lista samtliga kort
+Programmet ska kunna visa samtliga registrerade kort med tillhörande kortnummer, behörighet och datum via const AccessSystem *sys.
 
-Programmet ska inte använda globala variabler. Systemets tillstånd ska hanteras lokalt i main() och skickas mellan funktioner via parametrar och pekare. const ska användas när data endast behöver läsas.
+REQ 08 – Lägg till kort
+Programmet ska kunna registrera nya kort via add_card_interactive(AccessSystem *sys). Informationen ska valideras innan kortet sparas och dubbletter ska kontrolleras.
 
-Req 06 – Öppna dörren på distans
+REQ 09 – Ändra behörighet
+Programmet ska kunna ändra behörigheten för ett befintligt kort (toggle_card_permission) genom att ge eller återkalla behörighet utan att radera kortet ur listan.
 
-Programmet ska kunna öppna dörren på distans via ett menyval. Dörrstatus ska ändras till grön i tre sekunder och därefter återgå till släckt läge.
+REQ 10 – Simulera skanning
+Programmet ska kunna simulera en kortskanning (simulate_card_scan) genom att söka efter ett angivet kortnummer, kontrollera om kortet finns registrerat och skriva ut statuslampan (GRÖN eller RÖD) samt skanningsresultat.
 
-Req 07 – Lista samtliga kort
+REQ 11 – Filhantering (cards.dat)
+Programmet ska kunna läsa in befintliga kort från cards.dat vid start (load_cards) och spara kortregistret till cards.dat vid avslut (save_cards).
 
-Programmet ska kunna visa samtliga registrerade kort med tillhörande kortnummer, behörighet och datum.
+REQ 12 – Avsluta programmet kontrollerat
+Programmet ska kunna avslutas på ett kontrollerat sätt när användaren väljer att avsluta via menyn. Programmets huvudloop ska avslutas korrekt, data sparas till cards.dat och allokerat heap-minne ska frigöras (system_free).
 
-Req 08 – Lägg till kort
+3. Översiktstabell – Hur kraven hänger ihop
 
-Programmet ska kunna registrera nya kort. Informationen ska valideras innan kortet sparas och dubbletter ska kontrolleras.
+| Område | Krav | Hur de hänger ihop |
+| :--- | :--- | :--- |
+| Arkitektur | REQ 05 | Ingen global data; `sys` och `const sys` skickas mellan funktioner. |
+| Datastruktur | REQ 02–04 | `Card` och `AccessSystem` styr fält, maxlängder och minne. |
+| Registrering | REQ 01, 04, 08 | Kortnummer sparas som text, valideras och läggs till utan dubbletter. |
+| Visning | REQ 02, 07 | Läser kortdata med `const AccessSystem *sys` och skriver ut listan. |
+| Skanning | REQ 01, 10 | Jämför kortnummer som text och visar statuslampa (`GRÖN` / `RÖD`). |
+| Dörrstyrning | REQ 06, 10 | Skriver statuslampan (`GRÖN`, `RÖD`, `SLÄCKT`) och pausar med `sleep`. |
+| Behörighet | REQ 02–05, 09 | Växlar behörighet på befintligt kort utan att ta bort det. |
+| Filhantering | REQ 01–02, 04, 11 | Läser in och sparar kortregistret i `cards.dat` mellan körningar. |
+| Avslutning | REQ 04–05, 11–12 | Avslutar loopen, sparar till `cards.dat` och frigör minne. |
 
-Req 09 – Ändra behörighet
+4. Sammanfattning
+Programmets uppbyggnad kan ses som en kedja:
 
-Programmet ska kunna ändra behörigheten för ett befintligt kort genom att ge eller återkalla behörighet utan att radera kortet ur listan.
+REQ 01–05: Grundstruktur, datastruktur, textlängder och pekare utan globala variabler.
 
-Req 10 – Simulera skanning
+REQ 06–11: Programmets funktioner: dörrstyrning med statuslampa och sleep, visning, registrering, behörighet, skanning och filhantering mot cards.dat.
 
-Programmet ska kunna simulera en kortskanning genom att söka efter ett angivet kortnummer och kontrollera om kortet finns registrerat samt visa relevant status.
+REQ 12: Kontrollerad avslutning av programmet och frigöring av minne.
 
-Req 11 – Avsluta programmet kontrollerat
-
-Programmet ska kunna avslutas på ett kontrollerat sätt när användaren väljer att avsluta via menyn. Programmets huvudloop ska avslutas korrekt och eventuellt allokerat minne ska frigöras.
-
-
-
-
-2. Översiktstabell – Hur kraven hänger ihop
-Område	Krav som samverkar	Samband
-Arkitektur:	Req 05	Påverkar hela programmet och hur data skickas mellan funktioner.
-
-Datastruktur:	Req 02, 03, 04	Bestämmer vilken information som lagras, hur den organiseras och hur mycket minne den får använda.
-
-Registrering:	Req 01, 04, 08	Kortnummer sparas som text och ny kortinformation registreras i en struct.
-
-Visning : 	Req 02, 07	Den sparade kortinformationen används för att visa alla kort.
-
-Skanning : Req 01, 10	Kortnummer jämförs som text för att hitta rätt kort.
-
-Dörrstyrning :	Req 05, 06, 10	Pekare används för att ändra dörrstatus och status kan visas i programmet.
-
-Behörighet	: Req 02, 03, 04, 05, 09	Befintliga kort hittas och deras behörighet ändras utan att kortet raderas.
-
-Avslutning:	Req 04, 05, 11	Programmet avslutas kontrollerat och eventuellt dynamiskt minne frigörs.
-
-3. Sammanfattning :
-Man kan se programmets uppbyggnad som en kedja:
-Req 01–05  :Grundstruktur, datastruktur och lagring
-
-
-Req 06–10 : Programmets funktioner: dörrstyrning, visning, registrering, behörighet och skanning
-
-
-Req 11 : Kontrollerad avslutning av programmet
-
-
-Slutsats: De första kraven skapar grunden för programmets datastruktur och arkitektur. Därefter använder de funktionella kraven denna grund för att hantera kort, behörigheter och dörrstyrning. Det sista kravet säkerställer att programmet kan avslutas på ett korrekt sätt. På så sätt bildar alla 11 krav tillsammans ett sammanhängande system.
+De första kraven skapar grunden för programmets datastruktur och arkitektur. Därefter använder de funktionella kraven och filhanteringen denna grund för att hantera kort, behörigheter och dörrstyrning. Det sista kravet säkerställer att programmet kan avslutas på ett korrekt sätt. Tillsammans bildar alla 12 krav ett sammanhängande system.
