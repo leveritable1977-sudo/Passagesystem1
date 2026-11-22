@@ -7,6 +7,6 @@
 void init_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet);
 int lagg_till_kort(Passerkort **kort, size_t *antal, size_t *kapacitet);
 void visa_kort(const Passerkort *kort, size_t antal);
-void frigör_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet);
+void frigor_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet);
 
 #endif
