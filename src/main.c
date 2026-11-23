@@ -2,27 +2,92 @@
 #include <stddef.h>
 #include "Kortlista.h"
 #include "door.h"
+#include "safeinput.h"
+
+#define KORTFIL "kortregister.txt"
+
+static void skriv_meny(void) {
+    printf("\n=== Passagesystem - Huvudmeny ===\n");
+    printf("1. Oppna dorren pa distans\n");
+    printf("2. Lista samtliga kort\n");
+    printf("3. Lagg till ett nytt kort\n");
+    printf("4. Andra behorighet for befintligt kort\n");
+    printf("5. Simulera en kortskanning\n");
+    printf("6. Avsluta programmet\n");
+}
 
 int main(void) {
-    Passerkort *kort = NULL;
-    size_t antal = 0;
-    size_t kapacitet = 0;
-    char testkort[20] = {0};
+    Kortlista lista;
+    int val = 0;
+    int kor = 1;
 
-    init_kortlista(&kort, &antal, &kapacitet);
-
-    if (lagg_till_kort(&kort, &antal, &kapacitet)) {
-        visa_kort(kort, antal);
-
-        printf("Ange kortnummer att testa vid dorren: ");
-        if (scanf("%19s", testkort) == 1) {
-            kontrollera_passage(kort, antal, testkort);
-        }
-    } else {
-        visa_kort(kort, antal);
+    if (!init_kortlista(&lista, KORTFIL)) {
+        fprintf(stderr, "Kunde inte initiera kortlistan.\n");
+        return 1;
     }
 
-    frigor_kortlista(&kort, &antal, &kapacitet);
+    if (!ladda_kort(&lista)) {
+        fprintf(stderr, "Varning: Problem vid inlasning av %s.\n", KORTFIL);
+    }
 
+    while (kor) {
+        skriv_meny();
+        if (!las_heltal(&val)) {
+            printf("Ogiltigt val. Ange en siffra mellan 1 och 6.\n");
+            continue;
+        }
+
+        switch (val) {
+            case 1:
+                /* Anpassa funktionsnamnet om din door.h använder ett annat namn */
+                oppna_dorr_pa_distans();
+                break;
+
+            case 2:
+                visa_kort(&lista);
+                break;
+
+            case 3:
+                if (lagg_till_kort(&lista)) {
+                    spara_kort(&lista);
+                }
+                break;
+
+            case 4: {
+                char kortnummer[KORTNUMMER_MAX];
+                printf("Ange kortnummer for att andra behorighet: ");
+                if (las_rad(kortnummer, sizeof(kortnummer))) {
+                    if (andra_behorighet(&lista, kortnummer)) {
+                        spara_kort(&lista);
+                    }
+                } else {
+                    printf("Kunde inte lasa kortnummer.\n");
+                }
+                break;
+            }
+
+            case 5: {
+                char testkort[KORTNUMMER_MAX];
+                printf("Ange kortnummer att testa vid dorren: ");
+                if (las_rad(testkort, sizeof(testkort))) {
+                    kontrollera_passage(lista.kort, lista.antal, testkort);
+                } else {
+                    printf("Kunde inte lasa kortnummer.\n");
+                }
+                break;
+            }
+
+            case 6:
+                spara_kort(&lista);
+                kor = 0;
+                break;
+
+            default:
+                printf("Ogiltigt val. Ange en siffra mellan 1 och 6.\n");
+                break;
+        }
+    }
+
+    frigor_kortlista(&lista);
     return 0;
 }
