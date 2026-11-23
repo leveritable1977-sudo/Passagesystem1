@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include "Kortlista.h"
 #include "door.h"
 #include "safeinput.h"
@@ -23,11 +24,11 @@ int main(void) {
 
     if (!init_kortlista(&lista, KORTFIL)) {
         fprintf(stderr, "Kunde inte initiera kortlistan.\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     if (!ladda_kort(&lista)) {
-        fprintf(stderr, "Varning: Problem vid inlasning av %s.\n", KORTFIL);
+        fprintf(stderr, "Varning: Kunde inte lasa in hela kortregistret fran %s.\n", KORTFIL);
     }
 
     while (kor) {
@@ -49,7 +50,9 @@ int main(void) {
 
             case 3:
                 if (lagg_till_kort(&lista)) {
-                    spara_kort(&lista);
+                    if (!spara_kort(&lista)) {
+                        fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
+                    }
                 }
                 break;
 
@@ -58,7 +61,9 @@ int main(void) {
                 printf("Ange kortnummer for att andra behorighet: ");
                 if (las_rad(kortnummer, sizeof(kortnummer))) {
                     if (andra_behorighet(&lista, kortnummer)) {
-                        spara_kort(&lista);
+                        if (!spara_kort(&lista)) {
+                            fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
+                        }
                     }
                 } else {
                     printf("Kunde inte lasa kortnummer.\n");
@@ -78,7 +83,9 @@ int main(void) {
             }
 
             case 6:
-                spara_kort(&lista);
+                if (!spara_kort(&lista)) {
+                    fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
+                }
                 kor = 0;
                 break;
 
@@ -89,5 +96,6 @@ int main(void) {
     }
 
     frigor_kortlista(&lista);
-    return 0;
+    printf("Programmet avslutat.\n");
+    return EXIT_SUCCESS;
 }
