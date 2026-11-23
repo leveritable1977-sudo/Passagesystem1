@@ -25,4 +25,8 @@ typedef struct {
     const char *filnamn;
 } Kortlista;
 
+const char *behorighet_till_text(Behorighet status);
+int giltigt_kortnummer(const char *kortnummer);
+void initiera_kort(Passerkort *kort, const char *kortnummer, Behorighet status, const char *datum);
+
 #endif
