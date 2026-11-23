@@ -1,98 +1,285 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "Kortlista.h"
 
-#define START_KAPACITET 4
-
 static void rensa_nyrad(char *str) {
-    size_t len = strlen(str);
-    if (len > 0 && str[len - 1] == '\n') {
-        str[len - 1] = '\0';
-    }
-}
-
-void init_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet) {
-    if (kort == NULL || antal == NULL || kapacitet == NULL) {
+    if (str == NULL) {
         return;
     }
-    *kort = NULL;
-    *antal = 0;
-    *kapacitet = 0;
+    size_t len = strlen(str);
+    while (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r')) {
+        str[len - 1] = '\0';
+        len--;
+    }
 }
 
-int lagg_till_kort(Passerkort **kort, size_t *antal, size_t *kapacitet) {
-    if (kort == NULL || antal == NULL || kapacitet == NULL) {
+static int hitta_kort_index(const Kortlista *lista, const char *kortnummer) {
+    if (lista == NULL || lista->kort == NULL || kortnummer == NULL) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < lista->antal; i++) {
+        if (strcmp(lista->kort[i].kortnummer, kortnummer) == 0) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+static int sakerstall_kapacitet(Kortlista *lista, size_t behov) {
+    if (lista == NULL) {
         return 0;
     }
 
-    if (*antal == *kapacitet) {
-        size_t ny_kapacitet = (*kapacitet == 0) ? START_KAPACITET : (*kapacitet * 2);
-        Passerkort *temp = realloc(*kort, ny_kapacitet * sizeof(Passerkort));
-        if (temp == NULL) {
-            printf("Fel: Kunde inte allokera minne for kortlistan.\n");
+    if (behov <= lista->kapacitet) {
+        return 1;
+    }
+
+    size_t ny_kapacitet = (lista->kapacitet == 0) ? START_KAPACITET : lista->kapacitet;
+    while (ny_kapacitet < behov) {
+        if (ny_kapacitet > (size_t)-1 / 2) {
             return 0;
         }
-        *kort = temp;
-        *kapacitet = ny_kapacitet;
+        ny_kapacitet *= 2;
     }
 
-    Passerkort nytt_kort;
-    memset(&nytt_kort, 0, sizeof(nytt_kort));
-
-    printf("Ange kortnummer: ");
-    if (fgets(nytt_kort.kortnummer, sizeof(nytt_kort.kortnummer), stdin) == NULL) {
+    Passerkort *temp = realloc(lista->kort, ny_kapacitet * sizeof(Passerkort));
+    if (temp == NULL) {
+        fprintf(stderr, "Fel: Kunde inte allokera minne for kortlistan.\n");
         return 0;
     }
-    rensa_nyrad(nytt_kort.kortnummer);
 
-    int val = 0;
+    lista->kort = temp;
+    lista->kapacitet = ny_kapacitet;
+    return 1;
+}
+
+static void dagens_datum(char *buffert, size_t storlek) {
+    if (buffert == NULL || storlek == 0) {
+        return;
+    }
+
+    time_t nu = time(NULL);
+    struct tm tm_lokal;
+    struct tm *tm_pekare = localtime_r(&nu, &tm_lokal);
+
+    if (tm_pekare != NULL && strftime(buffert, storlek, "%Y-%m-%d", tm_pekare) > 0) {
+        return;
+    }
+
+    snprintf(buffert, storlek, "okant-datum");
+}
+
+int init_kortlista(Kortlista *lista, const char *filnamn) {
+    if (lista == NULL) {
+        return 0;
+    }
+
+    lista->kort = calloc(START_KAPACITET, sizeof(Passerkort));
+    if (lista->kort == NULL) {
+        fprintf(stderr, "Fel: Misslyckades med initial minnesallokering.\n");
+        lista->antal = 0;
+        lista->kapacitet = 0;
+        lista->filnamn = filnamn;
+        return 0;
+    }
+
+    lista->antal = 0;
+    lista->kapacitet = START_KAPACITET;
+    lista->filnamn = filnamn;
+    return 1;
+}
+
+int lagg_till_kort(Kortlista *lista) {
+    if (lista == NULL) {
+        return 0;
+    }
+
+    char kortnummer[KORTNUMMER_MAX];
+    printf("Ange kortnummer (endast bokstaver/siffror): ");
+    if (fgets(kortnummer, sizeof(kortnummer), stdin) == NULL) {
+        return 0;
+    }
+    rensa_nyrad(kortnummer);
+
+    if (!giltigt_kortnummer(kortnummer)) {
+        printf("Ogiltigt kortnummer. Anvand minst ett tecken (A-Z, a-z, 0-9).\n");
+        return 0;
+    }
+
+    if (hitta_kort_index(lista, kortnummer) != -1) {
+        printf("Kortnummer '%s' ar redan registrerat.\n", kortnummer);
+        return 0;
+    }
+
     char buffert[16];
+    int val = 0;
     printf("Behorighet (0 = Ingen, 1 = Aktiv): ");
     if (fgets(buffert, sizeof(buffert), stdin) == NULL) {
         return 0;
     }
-    if (sscanf(buffert, "%d", &val) != 1 || (val != BEHORIGHET_INGEN && val != BEHORIGHET_AKTIV)) {
+    rensa_nyrad(buffert);
+
+    if (sscanf(buffert, "%d", &val) != 1 ||
+        (val != BEHORIGHET_INGEN && val != BEHORIGHET_AKTIV)) {
         printf("Ogiltig behorighet. Kortet lades inte till.\n");
         return 0;
     }
-    nytt_kort.behorighet = (val == BEHORIGHET_AKTIV) ? BEHORIGHET_AKTIV : BEHORIGHET_INGEN;
 
-    printf("Ange datum (YYYY-MM-DD): ");
-    if (fgets(nytt_kort.datum, sizeof(nytt_kort.datum), stdin) == NULL) {
+    Behorighet status = (val == BEHORIGHET_AKTIV) ? BEHORIGHET_AKTIV : BEHORIGHET_INGEN;
+
+    if (!sakerstall_kapacitet(lista, lista->antal + 1)) {
         return 0;
     }
-    rensa_nyrad(nytt_kort.datum);
 
-    nytt_kort.kort = NULL;
+    char datum[DATUM_MAX];
+    dagens_datum(datum, sizeof(datum));
 
-    (*kort)[*antal] = nytt_kort;
-    (*antal)++;
+    initiera_kort(&lista->kort[lista->antal], kortnummer, status, datum);
+    lista->antal++;
+
+    printf("Kort '%s' tillagt (%s, datum %s).\n",
+           kortnummer, behorighet_till_text(status), datum);
     return 1;
 }
 
-void visa_kort(const Passerkort *kort, size_t antal) {
-    if (kort == NULL || antal == 0) {
+void visa_kort(const Kortlista *lista) {
+    if (lista == NULL || lista->kort == NULL || lista->antal == 0) {
         printf("Inga passerkort registrerade.\n");
         return;
     }
 
-    for (size_t i = 0; i < antal; i++) {
-        const char *status_text = (kort[i].behorighet == BEHORIGHET_AKTIV) ? "Aktiv" : "Ingen";
-        printf("[%zu] Kortnummer: %s | Behorighet: %s | Datum: %s\n",
-               i + 1, kort[i].kortnummer, status_text, kort[i].datum);
+    printf("\n--- Registrerade kort (%zu st) ---\n", lista->antal);
+    for (size_t i = 0; i < lista->antal; i++) {
+        const Passerkort *k = &lista->kort[i];
+        printf("[%zu] Kortnummer: %-15s | Behorighet: %-8s | Datum: %s\n",
+               i + 1,
+               k->kortnummer,
+               behorighet_till_text(k->behorighet),
+               k->datum);
     }
 }
 
-void frigor_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet) {
-    if (kort != NULL && *kort != NULL) {
-        free(*kort);
-        *kort = NULL;
+int andra_behorighet(Kortlista *lista, const char *kortnummer) {
+    if (lista == NULL || lista->kort == NULL || kortnummer == NULL) {
+        return 0;
     }
-    if (antal != NULL) {
-        *antal = 0;
+
+    int idx = hitta_kort_index(lista, kortnummer);
+    if (idx == -1) {
+        printf("Kortnummer '%s' hittades inte.\n", kortnummer);
+        return 0;
     }
-    if (kapacitet != NULL) {
-        *kapacitet = 0;
+
+    lista->kort[idx].behorighet =
+        (lista->kort[idx].behorighet == BEHORIGHET_AKTIV)
+            ? BEHORIGHET_INGEN
+            : BEHORIGHET_AKTIV;
+
+    printf("Behorighet for kort '%s' ar nu: %s.\n",
+           lista->kort[idx].kortnummer,
+           behorighet_till_text(lista->kort[idx].behorighet));
+    return 1;
+}
+
+int ladda_kort(Kortlista *lista) {
+    if (lista == NULL || lista->filnamn == NULL) {
+        return 0;
     }
+
+    FILE *fp = fopen(lista->filnamn, "r");
+    if (fp == NULL) {
+        return 1;
+    }
+
+    char rad[128];
+    while (fgets(rad, sizeof(rad), fp) != NULL) {
+        rensa_nyrad(rad);
+        if (rad[0] == '\0') {
+            continue;
+        }
+
+        char *sep1 = strchr(rad, ';');
+        if (sep1 == NULL) {
+            fprintf(stderr, "Varning: Ogiltig rad i kortfil hoppas over.\n");
+            continue;
+        }
+        *sep1 = '\0';
+
+        char *sep2 = strchr(sep1 + 1, ';');
+        if (sep2 == NULL) {
+            fprintf(stderr, "Varning: Ogiltig rad i kortfil hoppas over.\n");
+            continue;
+        }
+        *sep2 = '\0';
+
+        const char *kortnummer = rad;
+        const char *behorighet_str = sep1 + 1;
+        const char *datum = sep2 + 1;
+
+        if (!giltigt_kortnummer(kortnummer) || strlen(kortnummer) >= KORTNUMMER_MAX ||
+            (strcmp(behorighet_str, "0") != 0 && strcmp(behorighet_str, "1") != 0) ||
+            datum[0] == '\0' || strlen(datum) >= DATUM_MAX) {
+            fprintf(stderr, "Varning: Korrupt post i kortfil ignorerades.\n");
+            continue;
+        }
+
+        if (hitta_kort_index(lista, kortnummer) != -1) {
+            fprintf(stderr, "Varning: Dubblettkort '%s' i fil ignorerades.\n", kortnummer);
+            continue;
+        }
+
+        if (!sakerstall_kapacitet(lista, lista->antal + 1)) {
+            fclose(fp);
+            return 0;
+        }
+
+        Behorighet status = (strcmp(behorighet_str, "1") == 0)
+                                ? BEHORIGHET_AKTIV
+                                : BEHORIGHET_INGEN;
+        initiera_kort(&lista->kort[lista->antal], kortnummer, status, datum);
+        lista->antal++;
+    }
+
+    fclose(fp);
+    return 1;
+}
+
+int spara_kort(const Kortlista *lista) {
+    if (lista == NULL || lista->kort == NULL || lista->filnamn == NULL) {
+        return 0;
+    }
+
+    FILE *fp = fopen(lista->filnamn, "w");
+    if (fp == NULL) {
+        perror("Fel vid oppning av kortfil for skrivning");
+        return 0;
+    }
+
+    for (size_t i = 0; i < lista->antal; i++) {
+        const Passerkort *k = &lista->kort[i];
+        int status_int = (k->behorighet == BEHORIGHET_AKTIV) ? 1 : 0;
+        if (fprintf(fp, "%s;%d;%s\n", k->kortnummer, status_int, k->datum) < 0) {
+            perror("Fel vid skrivning till kortfil");
+            fclose(fp);
+            return 0;
+        }
+    }
+
+    fclose(fp);
+    return 1;
+}
+
+void frigor_kortlista(Kortlista *lista) {
+    if (lista == NULL) {
+        return;
+    }
+    free(lista->kort);
+    lista->kort = NULL;
+    lista->antal = 0;
+    lista->kapacitet = 0;
+    lista->filnamn = NULL;
 }

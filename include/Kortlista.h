@@ -4,9 +4,12 @@
 #include <stddef.h>
 #include "Passerkort.h"
 
-void init_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet);
-int lagg_till_kort(Passerkort **kort, size_t *antal, size_t *kapacitet);
-void visa_kort(const Passerkort *kort, size_t antal);
-void frigor_kortlista(Passerkort **kort, size_t *antal, size_t *kapacitet);
+int init_kortlista(Kortlista *lista, const char *filnamn);
+int lagg_till_kort(Kortlista *lista);
+void visa_kort(const Kortlista *lista);
+int andra_behorighet(Kortlista *lista, const char *kortnummer);
+int ladda_kort(Kortlista *lista);
+int spara_kort(const Kortlista *lista);
+void frigor_kortlista(Kortlista *lista);
 
 #endif
