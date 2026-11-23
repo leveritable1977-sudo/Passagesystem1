@@ -1,16 +1,28 @@
 #ifndef PASSERKORT_H
 #define PASSERKORT_H
 
+#include <stddef.h>
+
+#define KORTNUMMER_MAX 32
+#define DATUM_MAX 20
+#define START_KAPACITET 4
+
 typedef enum {
     BEHORIGHET_INGEN = 0,
     BEHORIGHET_AKTIV = 1
 } Behorighet;
 
-typedef struct Passerkort {
-    char kortnummer[20];
+typedef struct {
+    char kortnummer[KORTNUMMER_MAX];
     Behorighet behorighet;
-    char datum[20];
-    struct Passerkort *kort;
+    char datum[DATUM_MAX];
 } Passerkort;
+
+typedef struct {
+    Passerkort *kort;
+    size_t antal;
+    size_t kapacitet;
+    const char *filnamn;
+} Kortlista;
 
 #endif
