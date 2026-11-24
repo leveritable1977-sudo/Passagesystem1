@@ -93,43 +93,22 @@ int init_kortlista(Kortlista *lista, const char *filnamn) {
     return 1;
 }
 
-int lagg_till_kort(Kortlista *lista) {
-    if (lista == NULL) {
+int lagg_till_kort(Kortlista *lista, const char *kortnummer, Behorighet status) {
+    if (lista == NULL || kortnummer == NULL) {
         return 0;
     }
-
-    char kortnummer[KORTNUMMER_MAX];
-    printf("Ange kortnummer (endast bokstaver/siffror): ");
-    if (fgets(kortnummer, sizeof(kortnummer), stdin) == NULL) {
-        return 0;
-    }
-    rensa_nyrad(kortnummer);
 
     if (!giltigt_kortnummer(kortnummer)) {
-        printf("Ogiltigt kortnummer. Anvand minst ett tecken (A-Z, a-z, 0-9).\n");
         return 0;
     }
 
     if (hitta_kort_index(lista, kortnummer) != -1) {
-        printf("Kortnummer '%s' ar redan registrerat.\n", kortnummer);
         return 0;
     }
 
-    char buffert[16];
-    int val = 0;
-    printf("Behorighet (0 = Ingen, 1 = Aktiv): ");
-    if (fgets(buffert, sizeof(buffert), stdin) == NULL) {
+    if (status != BEHORIGHET_INGEN && status != BEHORIGHET_AKTIV) {
         return 0;
     }
-    rensa_nyrad(buffert);
-
-    if (sscanf(buffert, "%d", &val) != 1 ||
-        (val != BEHORIGHET_INGEN && val != BEHORIGHET_AKTIV)) {
-        printf("Ogiltig behorighet. Kortet lades inte till.\n");
-        return 0;
-    }
-
-    Behorighet status = (val == BEHORIGHET_AKTIV) ? BEHORIGHET_AKTIV : BEHORIGHET_INGEN;
 
     if (!sakerstall_kapacitet(lista, lista->antal + 1)) {
         return 0;
@@ -140,9 +119,6 @@ int lagg_till_kort(Kortlista *lista) {
 
     initiera_kort(&lista->kort[lista->antal], kortnummer, status, datum);
     lista->antal++;
-
-    printf("Kort '%s' tillagt (%s, datum %s).\n",
-           kortnummer, behorighet_till_text(status), datum);
     return 1;
 }
 
@@ -170,7 +146,6 @@ int andra_behorighet(Kortlista *lista, const char *kortnummer) {
 
     int idx = hitta_kort_index(lista, kortnummer);
     if (idx == -1) {
-        printf("Kortnummer '%s' hittades inte.\n", kortnummer);
         return 0;
     }
 
@@ -178,10 +153,6 @@ int andra_behorighet(Kortlista *lista, const char *kortnummer) {
         (lista->kort[idx].behorighet == BEHORIGHET_AKTIV)
             ? BEHORIGHET_INGEN
             : BEHORIGHET_AKTIV;
-
-    printf("Behorighet for kort '%s' ar nu: %s.\n",
-           lista->kort[idx].kortnummer,
-           behorighet_till_text(lista->kort[idx].behorighet));
     return 1;
 }
 

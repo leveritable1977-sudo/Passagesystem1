@@ -5,7 +5,7 @@
 #include "Passerkort.h"
 
 int init_kortlista(Kortlista *lista, const char *filnamn);
-int lagg_till_kort(Kortlista *lista);
+int lagg_till_kort(Kortlista *lista, const char *kortnummer, Behorighet status);
 void visa_kort(const Kortlista *lista);
 int andra_behorighet(Kortlista *lista, const char *kortnummer);
 int ladda_kort(Kortlista *lista);
