@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "Kortlista.h"
+#include "kortlista.h"
+#include "door.h"
 
 static void rensa_nyrad(char *str) {
     if (str == NULL) {

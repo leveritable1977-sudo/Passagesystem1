@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "Kortlista.h"
+#include "kortlista.h"
 #include "door.h"
 #include "safeinput.h"
 
 #define KORTFIL "kortregister.txt"
 
 static void skriv_meny(void) {
-    printf("\n=== Passagesystem - Huvudmeny ===\n");
+    printf("\n=== Passagesystem - Huvudmeny (max %d tecken) ===\n", KORTNUMMER_LANGD_MAX);
     printf("1. Oppna dorren pa distans\n");
     printf("2. Lista samtliga kort\n");
     printf("3. Lagg till ett nytt kort\n");
@@ -21,14 +21,16 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
     char kortnummer[KORTNUMMER_MAX];
     int behorighet_val = 0;
 
-    printf("Ange kortnummer (endast bokstaver/siffror): ");
+    printf("Ange kortnummer (1-%d tecken, A-Z/a-z/0-9): ", KORTNUMMER_LANGD_MAX);
     if (!las_rad(kortnummer, sizeof(kortnummer))) {
-        printf("Kunde inte lasa kortnummer.\n");
+        printf("Ogiltig eller for lang inmatning (max %zu tecken i buffert).\n",
+               (size_t)(KORTNUMMER_MAX - 1));
         return;
     }
 
     if (!giltigt_kortnummer(kortnummer)) {
-        printf("Ogiltigt kortnummer. Anvand minst ett tecken (A-Z, a-z, 0-9).\n");
+        printf("Ogiltigt kortnummer. Maste vara 1-%d tecken (A-Z, a-z, 0-9).\n",
+               KORTNUMMER_LANGD_MAX);
         return;
     }
 
@@ -73,7 +75,7 @@ static void hantera_kortskanning(const Kortlista *lista) {
 
     printf("Ange kortnummer att testa vid dorren: ");
     if (!las_rad(testkort, sizeof(testkort))) {
-        printf("Kunde inte lasa kortnummer.\n");
+        printf("Kunde inte lasa kortnummer (for lang inmatning).\n");
         return;
     }
 
