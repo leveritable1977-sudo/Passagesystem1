@@ -1,0 +1,5 @@
+Markdown
+| Krav | Funktion/Fil | Testfall | Indata | Förväntat resultat | Faktiskt resultat | Resultat |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `REQ 01`, `REQ 02`, `REQ 07`, `REQ 10` | `visa_kort()` (`src/main.c`), `kontrollera_passage()` (`src/door.c`) | `TC-01a` | Kort `01234` med behörighet `Ingen` (`0`), listning och skanning via menyval 5 | Kortnummer `01234` behålls som text; test med aktivt kort ger `PASSAGE_BEVILJAD` | Kortnummer `01234` visades med inledande nolla, men skanningen gav `PASSAGE_NEKAD_INAKTIV` (behörighet var `0`) | FAIL |
+| `REQ 01`, `REQ 09`, `REQ 10`, `REQ 11` | `andra_behorighet()`, `spara_kort()`, `ladda_kort()` (`src/Kortlista.c`), `kontrollera_passage()` (`src/door.c`) | `TC-01b` | Kort `01234` aktiverat via menyval 4, sparning/omstart och skanning av `01234` samt `12345` | `01234` behåller nollan och ger `PASSAGE_BEVILJAD`; `12345` ger `PASSAGE_BEVILJAD` vid aktiv status | `01234` gav `PASSAGE_BEVILJAD` med intakt ledande nolla efter aktivering och omstart; `12345` gav `PASSAGE_BEVILJAD` | Godkänd |
