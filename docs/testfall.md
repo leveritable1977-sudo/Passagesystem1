@@ -1,34 +1,22 @@
-Här är 5. Testfall – Alla 3 varianter av TC-01 anpassad i ren Markdown så att du kan klistra in den direkt i en .md-fil i Visual Studio Code utan trasiga kodblock eller tabellrader:Markdown## 5. Testfall – Alla 3 varianter av TC-01
+Markdown
+## 5. Testfall – Normalfall och inledande nolla (01234)
 
-### Variant 1: Löpande textformat
-
-**TC-01 – Specialfall: Kortnummer med inledande nollor**
-
-- **Krav:** REQ 01, REQ 02, REQ 03, REQ 05 och REQ 07.
-- **Design / Funktion (Funktionskontrakt):** Följande funktioner används för att implementera och testa kravet utan globala variabler (`REQ 05`):
-
-```c
-int add_card_interactive(AccessSystem *sys);
-/* REQ 07 & REQ 05: Visar samtliga kort (använder const då data enbart läses) */
-void list_cards(const AccessSystem *sys);
-Test / Indata: Funktionen add_card_interactive(AccessSystem *sys) används för att registrera ett kort med kortnummer "00123", behörighet 1 och datum "2026-11-08". Därefter anropas list_cards(&sys) för att skriva ut informationen.
-Förväntat resultat: Programmet ska spara och visa kortnumret exakt som "00123". Även behörighet (1) och datum ("2026-11-08") ska visas korrekt.
-Syfte: Testet kontrollerar att funktionskontraktet hanterar kortnumret som text och inte omvandlar det till ett heltal, vilket säkerställer att REQ 01 och REQ 05 uppfylls.
-
-
-### Variant 2: Tabellformat
+### Steg 1: Första testutfallet – Kort `01234` med inaktiv behörighet (fel/avvikelse vid första test)
 
 | Testkomponent | Beskrivning / Värde |
 | --- | --- |
-| Test-ID & Namn | TC-01 – Specialfall: Kortnummer med inledande nollor |
-| Krav | REQ 01, REQ 02, REQ 03, REQ 05, REQ 07 |
-| Funktionskontrakt | int add_card_interactive(AccessSystem *sys); och void list_cards(const AccessSystem *sys); |
-| Test / Indata | Ett kort registreras med add_card_interactive(&sys) med kortnummer "00123", behörighet 1 och datum "2026-11-08", varefter list_cards(&sys) anropas. |
-| Förväntat resultat | Programmet ska spara och visa kortnumret exakt som "00123", tillsammans med behörighet (1) och datum ("2026-11-08"). |
-| Syfte | Säkerställer att kortnummer sparas som text (char[]), att const används vid läsning och att REQ 01 och REQ 05 uppfylls. |
+| Test-ID & Namn | TC-01a – Inledande nolla (`01234`) med inaktiv behörighet |
+| Aktuella funktioner | `lagg_till_kort`, `visa_kort`, `kontrollera_passage` (`PassageResultat`) |
+| Indata | Kortnummer `01234` registrerat med behörighet `0` (Ingen), testat via menyval 5 (Simulera en kortskanning). |
+| Faktiskt utfall (första test) | Kortnumret `01234` bevarade sin inledande nolla i listan (`Kortnummer: 01234`), men passage nekades (`PASSAGE_NEKAD_INAKTIV`) eftersom behörigheten var satt till `Ingen` (`0`). |
+| Analys av felet / avvikelsen | Inledande nolla förlorades inte (kortnumret lagras som text), men jag hade satt inaktiv behörighet (`0`) i första testet när jag ville testa en godkänd passage med inledande nolla. |
 
-Variant 3: PunktlisteformatTC-01 – Specialfall: Kortnummer med inledande nollorKrav: REQ 01, REQ 02, REQ 03, REQ 05 och REQ 07.Design / Funktion (Kontrakt): Följande funktioner används för att implementera och testa kravet utan globala variabler (REQ 05):Cint add_card_interactive(AccessSystem *sys);
-/* REQ 07 & REQ 05: Visar samtliga kort (använder const då data enbart läses) */
-void list_cards(const AccessSystem *sys);
-Test / Indata: Ett kort registreras via add_card_interactive(&sys) med kortnummer "00123", behörighet 1 och datum "2026-11-08", och därefter anropas list_cards(&sys).Förväntat resultat: Programmet ska spara och visa kortnumret exakt som "00123", tillsammans med behörighet (1) och datum ("2026-11-08").Syfte: Testet kontrollerar att kortnummer hanteras som text (char[]), att add_card_interactive och list_cards tar AccessSystem via pekare (const vid läsning) och att REQ 01 och REQ 05 uppfylls.
+### Steg 2: Uppföljning och rättning – Aktivering av `01234` samt jämförelse med normalfall `12345`
 
+| Testkomponent | Beskrivning / Värde |
+| --- | --- |
+| Test-ID & Namn | TC-01b – Uppföljning: `01234` aktiverat samt normalfall `12345` |
+| Aktuella funktioner | `andra_behorighet`, `spara_kort`, `ladda_kort`, `kontrollera_passage` |
+| Indata / Åtgärd | Ändra behörighet för `01234` till `Aktiv` via menyval 4, spara till `kortregister.txt` och testa både `01234` och normalfallet `12345` via menyval 5. |
+| Förväntat och verifierat resultat | `01234` visas med behållen inledande nolla (`01234`) och ger `PASSAGE_BEVILJAD` när det är aktivt; `12345` fungerar som normalfall (`PASSAGE_BEVILJAD`) när det är aktivt. |
+| Syfte | Dokumentera hur en felaktig/ofullständig testkörning upptäcks, rättas och verifieras utan att tappa inledande nollor eller bryta filpersistensen. |

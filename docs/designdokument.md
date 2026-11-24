@@ -1,29 +1,29 @@
+Markdown
 ## 4. Design
 
 ### Moduler i systemet
 
-- **`safeinput` (`safeinput.h` / `safeinput.c`):** Hanterar säker textinmatning från `stdin` och inmatningsfel med `read_line` och `read_menu_choice`.
-- **`door` (`door.h` / `door.c`):** Hanterar dörröppning på distans och utskrift av statuslampan (`GRÖN`, `RÖD`, `SLÄCKT`) samt paus med `sleep`.
-- **`cards` (`cards.h` / `cards.c`):** Hanterar datastrukturerna `Card` och `AccessSystem`, dynamisk minnesallokering, kortoperationer och filhantering (`cards.dat`).
-- **`main` (`main.c`):** Skapar `AccessSystem sys` lokalt, laddar kort från `cards.dat`, driver meny-loopen och frigör minnet vid avslut.
+- **Inmatningsmodul (`safeinput.h` / `safeinput.c`):** Hanterar längdbegränsad och validerad text- och menyinmatning från `stdin` (till exempel `las_rad` och menyvalshantering) utan buffertspill.
+- **Dörr- och passage modul (`include/door.h` / `src/door.c`):** Hanterar kärnlogik för distansöppning (`oppna_dorr_pa_distans`) och passagekontroll (`kontrollera_passage`) med statuskoder (`PassageResultat`) utan direkta gränssnittsutskrifter.
+- **Kort- och listmodul (`include/Kortlista.h` / `src/Kortlista.c`):** Hanterar datastrukturerna `Passerkort` och `Kortlista`, dynamisk minnesallokering (`malloc`, `realloc`, `free`), kortoperationer (registrering, sökning, behörighetsändring) samt filinläsning och filsparning.
+- **Huvudprogram (`src/main.c`):** Skapar `Kortlista` lokalt i `main()`, laddar kort vid start, driver den iterativa meny-loopen, tolkar returvärden och statuskoder med gränssnittsutskrifter (`printf`), sparar data samt frigör minnet vid avslut.
 
 ### Datastrukturer
 
-- **`Card`:** Innehåller kortnummer som text (`char id[CARD_ID_MAX]`), behörighet (`int authorized`) och registreringsdatum (`char registered[DATE_MAX]`).
-- **`AccessSystem`:** Håller dynamisk kortarray (`Card *cards`), antal kort (`size_t count`), kapacitet (`size_t capacity`) och filnamn (`const char *storage_file`), till exempel `cards.dat`.
+- **`Passerkort`:** Innehåller kortnummer som text (`char kortnummer[KORTNUMMER_MAX]`), behörighetsstatus (`Aktiv` / `Ingen`) och registreringsdatum (`char datum[DATUM_MAX]`).
+- **`Kortlista`:** Håller dynamisk kortarray (`Passerkort *kort`), aktuellt antal kort (`size_t antal`), allokerad kapacitet (`size_t kapacitet`) och sökväg/filnamn för registret (till exempel `kortregister.txt`).
+- **`PassageResultat`:** Enum-typ i `include/door.h` som representerar utfallet av en passagekontroll (`PASSAGE_BEVILJAD`, `PASSAGE_NEKAD_INAKTIV`, `PASSAGE_NEKAD_EJ_REGISTRERAT`, `PASSAGE_NEKAD_OGILTIG_INMATA`).
 
 ### Huvudfunktioner
 
 ```c
-int system_init(AccessSystem *sys, const char *filename);
-void system_free(AccessSystem *sys);
-int load_cards(AccessSystem *sys);
-int save_cards(const AccessSystem *sys);
+int ladda_kort(Kortlista *lista, const char *filnamn);
+int spara_kort(const Kortlista *lista, const char *filnamn);
+void frigör_kortlista(Kortlista *lista);
 
-void door_open_remote(void);
-void door_show_scan_result(const char *card_id, int found, int authorized);
+int oppna_dorr_pa_distans(void);
+PassageResultat kontrollera_passage(const Kortlista *lista, const char *kortnummer);
 
-void list_cards(const AccessSystem *sys);
-int add_card_interactive(AccessSystem *sys);
-int toggle_card_permission(AccessSystem *sys);
-void simulate_card_scan(const AccessSystem *sys);
+int lagg_till_kort(Kortlista *lista, /* parametrar */);
+int andra_behorighet(Kortlista *lista, const char *kortnummer);
+void visa_kort(const Kortlista *lista);
