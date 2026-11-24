@@ -6,12 +6,12 @@
 void rensa_rad(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {
-        /* töm resten av raden */
+        /* tom resten av raden */
     }
 }
 
 int las_rad(char *buffert, size_t storlek) {
-    if (buffert == NULL || storlek == 0) {
+    if (buffert == NULL || storlek < 2) {
         return 0;
     }
 
@@ -23,11 +23,12 @@ int las_rad(char *buffert, size_t storlek) {
     size_t langd = strlen(buffert);
     if (langd > 0 && buffert[langd - 1] == '\n') {
         buffert[langd - 1] = '\0';
-    } else {
-        rensa_rad();
+        return 1;
     }
 
-    return 1;
+    rensa_rad();
+    buffert[0] = '\0';
+    return 0;
 }
 
 int las_heltal(int *varde) {

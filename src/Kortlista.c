@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "Kortlista.h"
+#include "kortlista.h"
+#include "door.h"
 
 static void rensa_nyrad(char *str) {
     if (str == NULL) {
@@ -93,25 +94,25 @@ int init_kortlista(Kortlista *lista, const char *filnamn) {
     return 1;
 }
 
-int lagg_till_kort(Kortlista *lista, const char *kortnummer, Behorighet status) {
+LaggTillResultat lagg_till_kort(Kortlista *lista, const char *kortnummer, Behorighet status) {
     if (lista == NULL || kortnummer == NULL) {
-        return 0;
+        return LAGG_TILL_OGILTIGT;
     }
 
     if (!giltigt_kortnummer(kortnummer)) {
-        return 0;
+        return LAGG_TILL_OGILTIGT;
     }
 
     if (hitta_kort_index(lista, kortnummer) != -1) {
-        return 0;
+        return LAGG_TILL_FINNS_REDAN;
     }
 
     if (status != BEHORIGHET_INGEN && status != BEHORIGHET_AKTIV) {
-        return 0;
+        return LAGG_TILL_OGILTIGT;
     }
 
     if (!sakerstall_kapacitet(lista, lista->antal + 1)) {
-        return 0;
+        return LAGG_TILL_MINNESFEL;
     }
 
     char datum[DATUM_MAX];
@@ -119,7 +120,7 @@ int lagg_till_kort(Kortlista *lista, const char *kortnummer, Behorighet status) 
 
     initiera_kort(&lista->kort[lista->antal], kortnummer, status, datum);
     lista->antal++;
-    return 1;
+    return LAGG_TILL_OK;
 }
 
 void visa_kort(const Kortlista *lista) {

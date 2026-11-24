@@ -1,6 +1,10 @@
 #include <string.h>
 #include "door.h"
 
+const char *behorighet_till_text(Behorighet status) {
+    return (status == BEHORIGHET_AKTIV) ? "Aktiv" : "Ingen";
+}
+
 int oppna_dorr_pa_distans(void) {
     return 1;
 }

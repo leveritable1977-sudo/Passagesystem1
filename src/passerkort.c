@@ -1,18 +1,19 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include "Passerkort.h"
-
-const char *behorighet_till_text(Behorighet status) {
-    return (status == BEHORIGHET_AKTIV) ? "Aktiv" : "Ingen";
-}
+#include "passerkort.h"
 
 int giltigt_kortnummer(const char *kortnummer) {
     if (kortnummer == NULL || kortnummer[0] == '\0') {
         return 0;
     }
 
-    for (size_t i = 0; kortnummer[i] != '\0'; i++) {
+    size_t langd = strlen(kortnummer);
+    if (langd > KORTNUMMER_LANGD_MAX) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < langd; i++) {
         if (!isalnum((unsigned char)kortnummer[i])) {
             return 0;
         }
