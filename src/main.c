@@ -53,6 +53,34 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
     }
 }
 
+static void hantera_kortskanning(const Kortlista *lista) {
+    char testkort[KORTNUMMER_MAX];
+
+    printf("Ange kortnummer att testa vid dorren: ");
+    if (!las_rad(testkort, sizeof(testkort))) {
+        printf("Kunde inte lasa kortnummer.\n");
+        return;
+    }
+
+    PassageResultat resultat = kontrollera_passage(lista->kort, lista->antal, testkort);
+
+    switch (resultat) {
+        case PASSAGE_BEVILJAD:
+            printf("Passage beviljad for kort %s.\n", testkort);
+            break;
+        case PASSAGE_NEKAD_INAKTIV:
+            printf("Passage nekad: kort %s har ingen aktiv behorighet.\n", testkort);
+            break;
+        case PASSAGE_NEKAD_EJ_REGISTRERAT:
+            printf("Passage nekad: kortnummer %s ar inte registrerat.\n", testkort);
+            break;
+        case PASSAGE_NEKAD_OGILTIG_INMATA:
+        default:
+            printf("Passage nekad: inget kortnummer angivet.\n");
+            break;
+    }
+}
+
 int main(void) {
     Kortlista lista;
     int val = 0;
@@ -76,7 +104,11 @@ int main(void) {
 
         switch (val) {
             case 1:
-                oppna_dorr_pa_distans();
+                if (oppna_dorr_pa_distans()) {
+                    printf("Dorren oppnad pa distans.\n");
+                } else {
+                    printf("Kunde inte oppna dorren pa distans.\n");
+                }
                 break;
 
             case 2:
@@ -105,16 +137,9 @@ int main(void) {
                 break;
             }
 
-            case 5: {
-                char testkort[KORTNUMMER_MAX];
-                printf("Ange kortnummer att testa vid dorren: ");
-                if (las_rad(testkort, sizeof(testkort))) {
-                    kontrollera_passage(lista.kort, lista.antal, testkort);
-                } else {
-                    printf("Kunde inte lasa kortnummer.\n");
-                }
+            case 5:
+                hantera_kortskanning(&lista);
                 break;
-            }
 
             case 6:
                 if (!spara_kort(&lista)) {
