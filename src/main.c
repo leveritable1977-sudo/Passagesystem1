@@ -43,13 +43,28 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
                             ? BEHORIGHET_AKTIV
                             : BEHORIGHET_INGEN;
 
-    if (lagg_till_kort(lista, kortnummer, status)) {
-        printf("Kort '%s' tillagt (%s).\n", kortnummer, behorighet_till_text(status));
-        if (!spara_kort(lista)) {
-            fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
-        }
-    } else {
-        printf("Kunde inte lagga till kort '%s' (kan redan finnas eller sakna plats).\n", kortnummer);
+    LaggTillResultat resultat = lagg_till_kort(lista, kortnummer, status);
+
+    switch (resultat) {
+        case LAGG_TILL_OK:
+            printf("Kort '%s' tillagt (%s).\n", kortnummer, behorighet_till_text(status));
+            if (!spara_kort(lista)) {
+                fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
+            }
+            break;
+
+        case LAGG_TILL_FINNS_REDAN:
+            printf("Kort '%s' finns redan registrerat.\n", kortnummer);
+            break;
+
+        case LAGG_TILL_MINNESFEL:
+            printf("Kunde inte lagga till kort '%s' (saknar ledigt minne).\n", kortnummer);
+            break;
+
+        case LAGG_TILL_OGILTIGT:
+        default:
+            printf("Kunde inte lagga till kort '%s' (ogiltig data).\n", kortnummer);
+            break;
     }
 }
 
