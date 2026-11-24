@@ -1,22 +1,6 @@
 Markdown
-## 5. Testfall – Normalfall och inledande nolla (01234)
-
-### Steg 1: Första testutfallet – Kort `01234` med inaktiv behörighet (fel/avvikelse vid första test)
-
-| Testkomponent | Beskrivning / Värde |
-| --- | --- |
-| Test-ID & Namn | TC-01a – Inledande nolla (`01234`) med inaktiv behörighet |
-| Aktuella funktioner | `lagg_till_kort`, `visa_kort`, `kontrollera_passage` (`PassageResultat`) |
-| Indata | Kortnummer `01234` registrerat med behörighet `0` (Ingen), testat via menyval 5 (Simulera en kortskanning). |
-| Faktiskt utfall (första test) | Kortnumret `01234` bevarade sin inledande nolla i listan (`Kortnummer: 01234`), men passage nekades (`PASSAGE_NEKAD_INAKTIV`) eftersom behörigheten var satt till `Ingen` (`0`). |
-| Analys av felet / avvikelsen | Inledande nolla förlorades inte (kortnumret lagras som text), men jag hade satt inaktiv behörighet (`0`) i första testet när jag ville testa en godkänd passage med inledande nolla. |
-
-### Steg 2: Uppföljning och rättning – Aktivering av `01234` samt jämförelse med normalfall `12345`
-
-| Testkomponent | Beskrivning / Värde |
-| --- | --- |
-| Test-ID & Namn | TC-01b – Uppföljning: `01234` aktiverat samt normalfall `12345` |
-| Aktuella funktioner | `andra_behorighet`, `spara_kort`, `ladda_kort`, `kontrollera_passage` |
-| Indata / Åtgärd | Ändra behörighet för `01234` till `Aktiv` via menyval 4, spara till `kortregister.txt` och testa både `01234` och normalfallet `12345` via menyval 5. |
-| Förväntat och verifierat resultat | `01234` visas med behållen inledande nolla (`01234`) och ger `PASSAGE_BEVILJAD` när det är aktivt; `12345` fungerar som normalfall (`PASSAGE_BEVILJAD`) när det är aktivt. |
-| Syfte | Dokumentera hur en felaktig/ofullständig testkörning upptäcks, rättas och verifieras utan att tappa inledande nollor eller bryta filpersistensen. |
+| Krav | Funktion/Fil | Testfall | Indata | Förväntat resultat | Faktiskt resultat | Resultat |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `REQ 01`, `REQ 02`, `REQ 07`, `REQ 10` | `visa_kort()` (`src/main.c`), `kontrollera_passage()` (`src/door.c`) | `TC-01a` | Kort `01234` med behörighet `Ingen` (`0`), listning och skanning via menyval 5 | Kortnummer `01234` behålls som text; test med aktivt kort ger `PASSAGE_BEVILJAD` | Kortnummer `01234` visades med inledande nolla, men skanningen gav `PASSAGE_NEKAD_INAKTIV` (behörighet var `0`) | FAIL |
+| `REQ 01`, `REQ 09`, `REQ 10`, `REQ 11` | `andra_behorighet()`, `spara_kort()`, `ladda_kort()` (`src/Kortlista.c`), `kontrollera_passage()` (`src/door.c`) | `TC-01b` | Kort `01234` aktiverat via menyval 4, sparning/omstart och skanning av `01234` samt `12345` | `01234` behåller nollan och ger `PASSAGE_BEVILJAD`; `12345` ger `PASSAGE_BEVILJAD` vid aktiv status | `01234` gav `PASSAGE_BEVILJAD` med intakt ledande nolla efter aktivering och omstart; `12345` gav `PASSAGE_BEVILJAD` | Godkänd |
+| `REQ 01`, `REQ 04`, `REQ 08` | `lagg_till_kort()` (`src/Kortlista.c`), `visa_kort()` (`src/main.c`) | `TC-02` | Försök att registrera befintligt kortnummer `01234` en andra gång via menyval `3` och kontrollera listan via menyval `2` | `lagg_till_kort` nekar dubbletten, `antal` i `Kortlista` ökar inte och `main.c` skriver ut felmeddelande | Registreringen avvisades med felmeddelande och kort `01234` fanns fortsatt bara en gång i listan | Godkänd |

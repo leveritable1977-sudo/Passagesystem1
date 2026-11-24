@@ -7,4 +7,5 @@ bin/
 
 # Systemfiler
 .DS_Store
-Thumbs.d
+Thumbs.db
+kortregister.txt
