@@ -2,7 +2,7 @@
 #define DOOR_H
 
 #include <stddef.h>
-#include "passerkort.h"
+#include "Passerkort.h"
 
 typedef enum {
     PASSAGE_NEKAD_OGILTIG_INMATA = -2,

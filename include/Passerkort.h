@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-#define KORTNUMMER_MAX 32
-#define DATUM_MAX 20
+#define KORTNUMMER_MAX 6
+#define DATUM_MAX 11
 #define START_KAPACITET 4
 
 typedef enum {
