@@ -1,16 +1,27 @@
-CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Iinclude
+CC        := gcc
+CFLAGS    := -std=c11 -Wall -Wextra -Wpedantic -g -Iinclude
 
-TARGET = build/passagesystem
-SRC = src/main.c src/passerkort.c
+BUILD_DIR := build
+TARGET    := $(BUILD_DIR)/passagesystem
+
+SRCS      := $(wildcard src/*.c)
+OBJS      := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+
+.PHONY: all clean run
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+$(TARGET): $(OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
+
+$(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	rm -rf build/*
-
-.PHONY: all clean
+	rm -rf $(BUILD_DIR)
