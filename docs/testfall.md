@@ -1,22 +1,6 @@
-Markdown
-## 5. Testfall – Normalfall och inledande nolla (01234)
-
-### Steg 1: Första testutfallet – Kort `01234` med inaktiv behörighet (fel/avvikelse vid första test)
-
-| Testkomponent | Beskrivning / Värde |
-| --- | --- |
-| Test-ID & Namn | TC-01a – Inledande nolla (`01234`) med inaktiv behörighet |
-| Aktuella funktioner | `lagg_till_kort`, `visa_kort`, `kontrollera_passage` (`PassageResultat`) |
-| Indata | Kortnummer `01234` registrerat med behörighet `0` (Ingen), testat via menyval 5 (Simulera en kortskanning). |
-| Faktiskt utfall (första test) | Kortnumret `01234` bevarade sin inledande nolla i listan (`Kortnummer: 01234`), men passage nekades (`PASSAGE_NEKAD_INAKTIV`) eftersom behörigheten var satt till `Ingen` (`0`). |
-| Analys av felet / avvikelsen | Inledande nolla förlorades inte (kortnumret lagras som text), men jag hade satt inaktiv behörighet (`0`) i första testet när jag ville testa en godkänd passage med inledande nolla. |
-
-### Steg 2: Uppföljning och rättning – Aktivering av `01234` samt jämförelse med normalfall `12345`
-
-| Testkomponent | Beskrivning / Värde |
-| --- | --- |
-| Test-ID & Namn | TC-01b – Uppföljning: `01234` aktiverat samt normalfall `12345` |
-| Aktuella funktioner | `andra_behorighet`, `spara_kort`, `ladda_kort`, `kontrollera_passage` |
-| Indata / Åtgärd | Ändra behörighet för `01234` till `Aktiv` via menyval 4, spara till `kortregister.txt` och testa både `01234` och normalfallet `12345` via menyval 5. |
-| Förväntat och verifierat resultat | `01234` visas med behållen inledande nolla (`01234`) och ger `PASSAGE_BEVILJAD` när det är aktivt; `12345` fungerar som normalfall (`PASSAGE_BEVILJAD`) när det är aktivt. |
-| Syfte | Dokumentera hur en felaktig/ofullständig testkörning upptäcks, rättas och verifieras utan att tappa inledande nollor eller bryta filpersistensen. |
+| ID och kopplat krav | Testtyp | Förutsättning och indata | Steg | Förväntat resultat | Faktiskt resultat | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `TC-01a`<br>(`REQ 02`, `REQ 07`, `REQ 09`, `REQ 10`) | Normalfall | Programmet är startat med korten `12345` och `12346` registrerade med kortnummer, behörighetsstatus och datum.<br>**Indata:** Menyval `2`, `5`, `4` och `5` med kort `12345` och `12346`. | 1. Välj menyval `2` och kontrollera att `12345` och `12346` visas med kortnummer, behörighet och datum.<br>2. Välj menyval `5` och skanna `12345` samt `12346`.<br>3. Välj menyval `4` för att ändra behörighet på ett kort och skanna igen via menyval `5`. | Kortnummer, behörighet och datum visas korrekt. Aktivt kort ger `PASSAGE_BEVILJAD` (GRÖN) och inaktivt kort ger `PASSAGE_NEKAD_INAKTIV` (RÖD). | Kort `12345` och `12346` listades med kortnummer, behörighet och datum; skanning gav `PASSAGE_BEVILJAD` vid aktiv status och `PASSAGE_NEKAD_INAKTIV` vid inaktiv status. | Godkänd |
+| `TC-01b`<br>(`REQ 01`, `REQ 11`) | Specialfall | Programmet är startat med kort `01234` registrerat.<br>**Indata:** Menyval `2`, `6` (spara/avsluta), omstart samt menyval `2` och `5` med kort `01234`. | 1. Välj menyval `2` och kontrollera att kortnumret skrivs ut som `01234` med inledande nolla.<br>2. Välj menyval `6` för att spara och avsluta.<br>3. Starta om programmet så korten laddas från fil.<br>4. Välj menyval `2` och skanna `01234` via menyval `5`. | Inledande nolla i `01234` bevaras som text vid listning, filsparning, omstart och skanning. | Kortnummer `01234` behöll sin inledande nolla efter sparning och omstart och hanterades som text vid skanning. | Godkänd |
+| `TC-02`<br>(`REQ 01`, `REQ 04`, `REQ 08`) | Felaktig indata | Kort `01234` finns redan i kortlistan.<br>**Indata:** Menyval `3` med kortnummer `01234`, följt av menyval `2`. | 1. Välj menyval `3` (Lägg till kort) och mata in `01234`.<br>2. Välj menyval `2` (Lista kort) och kontrollera antalet kort. | `lagg_till_kort()` avvisar dubbletten, `antal` i `Kortlista` ökar inte och felmeddelande skrivs ut utan krasch. | Registreringen avvisades med felmeddelande och kort `01234` fanns fortsatt bara en gång i listan. | Godkänd |
+| `TC-03`<br>(`REQ 01`, `REQ 03`, `REQ 06`, `REQ 10`) | Brytpunkt | Programmet startar med 3 befintliga kort (`12345`, `12346`, `01234`) och `START_KAPACITET = 4`.<br>**Indata:** `2001` (4:e kortet) och `2002` (5:e kortet) via menyval `3`, följt av menyval `2`, `4` och `5`. | 1. Välj menyval `3` och lägg till `2001` (totalt 4 kort, fyller startkapaciteten).<br>2. Välj menyval `3` och lägg till `2002` (totalt 5 kort, triggar `realloc` i `sakerstall_kapacitet()`).<br>3. Välj menyval `2` och kontrollera att alla 5 kort visas utan dataförlust.<br>4. Välj menyval `4` på `2002` och skanna via menyval `5`. | Vid det 5:e kortet (`2002`) utökar `sakerstall_kapacitet()` arrayen med `realloc` utan krasch eller minnesfel. Alla 5 kort listas korrekt och skanning av aktivt kort ger `PASSAGE_BEVILJAD`. | Korten `2001` (4:e) och `2002` (5:e) lades till utan minnesfel eller krasch när `START_KAPACITET` (`4`) passerades; menyval `2` listade alla 5 kort intakta och skanning av `2002` efter aktivering via menyval `4` gav `PASSAGE_BEVILJAD`. | Godkänd |
