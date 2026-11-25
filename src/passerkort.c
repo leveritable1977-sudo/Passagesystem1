@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include "passerkort.h"
+#include "Passerkort.h"
 
 int giltigt_kortnummer(const char *kortnummer) {
     if (kortnummer == NULL || kortnummer[0] == '\0') {
@@ -9,7 +9,7 @@ int giltigt_kortnummer(const char *kortnummer) {
     }
 
     size_t langd = strlen(kortnummer);
-    if (langd > KORTNUMMER_LANGD_MAX) {
+    if (langd > (size_t)(KORTNUMMER_MAX - 1)) {
         return 0;
     }
 
@@ -35,9 +35,9 @@ void initiera_kort(Passerkort *kort, const char *kortnummer, Behorighet status, 
 
     kort->behorighet = status;
 
-    if (datum != NULL && datum[0] != '\0') {
+   if (datum != NULL && datum[0] != '\0') {
         snprintf(kort->datum, sizeof(kort->datum), "%s", datum);
     } else {
-        snprintf(kort->datum, sizeof(kort->datum), "okant-datum");
+        snprintf(kort->datum, sizeof(kort->datum), "okant");
     }
 }

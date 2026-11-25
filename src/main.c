@@ -8,7 +8,7 @@
 #define KORTFIL "kortregister.txt"
 
 static void skriv_meny(void) {
-    printf("\n=== Passagesystem - Huvudmeny (max %d tecken) ===\n", KORTNUMMER_LANGD_MAX);
+    printf("\n=== Passagesystem - Huvudmeny (max %d tecken) ===\n", KORTNUMMER_MAX - 1);
     printf("1. Oppna dorren pa distans\n");
     printf("2. Lista samtliga kort\n");
     printf("3. Lagg till ett nytt kort\n");
@@ -21,7 +21,7 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
     char kortnummer[KORTNUMMER_MAX];
     int behorighet_val = 0;
 
-    printf("Ange kortnummer (1-%d tecken, A-Z/a-z/0-9): ", KORTNUMMER_LANGD_MAX);
+    printf("Ange kortnummer (1-%d tecken, A-Z/a-z/0-9): ", KORTNUMMER_MAX - 1);
     if (!las_rad(kortnummer, sizeof(kortnummer))) {
         printf("Ogiltig eller for lang inmatning (max %zu tecken i buffert).\n",
                (size_t)(KORTNUMMER_MAX - 1));
@@ -30,7 +30,7 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
 
     if (!giltigt_kortnummer(kortnummer)) {
         printf("Ogiltigt kortnummer. Maste vara 1-%d tecken (A-Z, a-z, 0-9).\n",
-               KORTNUMMER_LANGD_MAX);
+               KORTNUMMER_MAX - 1);
         return;
     }
 
