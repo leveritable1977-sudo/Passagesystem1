@@ -1,11 +1,17 @@
+Kodavsnitt
 # Byggmappar och binärer
 build/
 bin/
 *.o
+*.d
 *.exe
 *.out
+
+# Lokal registerdata och testkopior
+kortregister.txt
+kortregister_test*.txt
+*.bak
 
 # Systemfiler
 .DS_Store
 Thumbs.db
-kortregister.txt

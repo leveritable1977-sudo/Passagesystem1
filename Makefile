@@ -1,11 +1,13 @@
+Makefile
 CC        := gcc
-CFLAGS    := -std=c11 -Wall -Wextra -Wpedantic -g -Iinclude
+CFLAGS    := -std=c11 -Wall -Wextra -Wpedantic -g -Iinclude -MMD -MP
 
 BUILD_DIR := build
 TARGET    := $(BUILD_DIR)/passagesystem
 
 SRCS      := $(wildcard src/*.c)
 OBJS      := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+DEPS      := $(OBJS:.o=.d)
 
 .PHONY: all clean run
 
@@ -19,6 +21,8 @@ $(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
+
+-include $(DEPS)
 
 run: $(TARGET)
 	./$(TARGET)

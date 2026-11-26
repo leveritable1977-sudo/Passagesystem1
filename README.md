@@ -18,19 +18,30 @@ Passagesystem1/
 ├── .gitignore     # Konfigurationsfil för Git (exkluderar build/ och lokal testdata)
 ├── README.md      # Projektbeskrivning, bygg- och körinstruktioner
 └── Makefile       # Automatiserad byggfil för kompilering och länkning med gcc
-🧩 Moduler och ansvar
-Passerkort (Passerkort.h / passerkort.c) – Datatyper, konstanter och funktioner för passerkort, behörighetsstatus och validering.
 
-Kortlista (Kortlista.h / Kortlista.c) – Dynamisk minneshantering av kortlistan samt inläsning och sparning mot fil (kortregister.txt).
+
+🧩 Moduler och ansvar
+Passerkort (Passerkort.h / passerkort.c) – Datatyper, konstanter (KORTNUMMER_MAX) och funktioner för passerkort, behörighetsstatus och validering av kortnummer (1–5 alfanumeriska tecken).
+
+Kortlista (Kortlista.h / Kortlista.c) – Dynamisk minneshantering av kortlistan (malloc, realloc, free) samt inläsning och sparning mot fil (kortregister.txt), inklusive robust hantering av ogiltiga eller korrupta rader.
 
 door (door.h / door.c) – Dörrkontroll, behörighetskontroll vid passage och fjärröppning av dörr.
 
-safeinput (safeinput.h / safeinput.c) – Säker rad- och heltalsinmatning från användaren.
+safeinput (safeinput.h / safeinput.c) – Säker rad- och heltalsinmatning (las_rad, las_heltal, rensa_rad) med fgets och strtol utan scanf.
 
-main.c – Huvudmeny och styrning av programflödet.
+main.c – Huvudmeny, styrning av programflödet och presentation i terminalen.
+
+🔒 Säker inmatning och buffertdesign
+Separerad buffert- och längdgräns: KORTNUMMER_MAX är satt till 7 i include/Passerkort.h så att ett kortnummer på upp till 5 tecken (till exempel "01234") får plats tillsammans med radbrytning (\n) och nollterminering (\0) vid inläsning med fgets(). Tidigare buffertstorlek (6 byte) lämnade kvar \n i stdin vid 5-teckensinmatning.
+
+Domänvalidering: giltigt_kortnummer() kontrollerar att längden är 1–5 tecken och att tecknen är giltiga innan inmatningen godkänns.
+
+Skydd mot buffertspill och resttecken: las_rad() verifierar att radbrytning (\n) lästes in i bufferten. Om inmatningen är för lång töms överflödiga tecken från stdin med rensa_rad() och avvisas utan att påverka efterföljande menyval.
+
+Inga globala variabler: Allt tillstånd hanteras lokalt och skickas via pekare (Kortlista * och const Kortlista *), med kompilering under strikta flaggor (-Wall -Wextra -Wpedantic).
 
 🛠️ Bygg- och körinstruktioner
-Bygg programmet från projektroten med make (eller bygg om från grunden och rensa byggfiler med make clean):
+Bygg om programmet från grunden och rensa byggfiler med make:
 
 Bash
 make clean && make
