@@ -50,3 +50,12 @@ Kör den färdigbyggda binären från projektroten:
 
 Bash
 ./build/passagesystem
+
+## 🧪 Testning
+
+Bygg programmet med `make` och starta binären från projektroten för att verifiera huvudflöde, gränsfall och filpersistens (`kortregister.txt`):
+
+1. **Lägga till och lista kort:** Testa giltiga kortnummer med 1–5 tecken (inklusive ledande nollor som `01234` och bokstäver som `ABC12`) och verifiera att listan uppdateras.
+2. **Gränsfall och ogiltig inmatning:** Testa tomma strängar, för långa kortnummer (`ABC123`), ogiltiga tecken (`AB-1`), dubbletter, okända kort (`99999`), inaktiva kort samt felaktiga menyval utan att programmet kraschar eller lämnar resttecken i `stdin`.
+3. **Ändra behörighet och dörrkontroll:** Växla behörighet mellan aktiv och ingen, kontrollera dörrstatus vid passageförsök och testa fjärröppning.
+4. **Filpersistens och felaktiga filrader:** Avsluta programmet så kortregistret sparas i `kortregister.txt`, starta om och kontrollera att registret återställs. Testa även att `kortregister.txt` hanterar korrupta eller ogiltiga rader utan krasch.
