@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define KORTNUMMER_MAX 6
+#define KORTNUMMER_MAX 7
 #define DATUM_MAX 11
 #define START_KAPACITET 4
 
