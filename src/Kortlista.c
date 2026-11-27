@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,15 +7,29 @@
 #include "kortlista.h"
 #include "door.h"
 
-static void rensa_nyrad(char *str) {
-    if (str == NULL) {
-        return;
+static void tom_resten_av_filrad(FILE *fp) {
+    int c;
+    while ((c = fgetc(fp)) != '\n' && c != EOF) {
+        /* rensa tecken kvar pa for lang rad */
     }
-    size_t len = strlen(str);
-    while (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r')) {
-        str[len - 1] = '\0';
-        len--;
+}
+
+static int giltigt_datum_format(const char *datum) {
+    if (datum == NULL || strlen(datum) != 10) {
+        return 0;
     }
+
+    for (size_t i = 0; i < 10; i++) {
+        if (i == 4 || i == 7) {
+            if (datum[i] != '-') {
+                return 0;
+            }
+        } else if (!isdigit((unsigned char)datum[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
 static int hitta_kort_index(const Kortlista *lista, const char *kortnummer) {
@@ -168,39 +183,75 @@ int ladda_kort(Kortlista *lista) {
     }
 
     char rad[128];
+    size_t radnummer = 0;
+
     while (fgets(rad, sizeof(rad), fp) != NULL) {
-        rensa_nyrad(rad);
+        radnummer++;
+        size_t len = strlen(rad);
+        int hade_nyrad = (len > 0 && rad[len - 1] == '\n');
+
+        if (!hade_nyrad) {
+            int nasta = fgetc(fp);
+            if (nasta != EOF) {
+                ungetc(nasta, fp);
+                tom_resten_av_filrad(fp);
+                fprintf(stderr, "Varning: For lang rad %zu i kortfil ignorerades.\n", radnummer);
+                continue;
+            }
+        }
+
+        while (len > 0 && (rad[len - 1] == '\n' || rad[len - 1] == '\r')) {
+            rad[len - 1] = '\0';
+            len--;
+        }
+
         if (rad[0] == '\0') {
             continue;
         }
 
         char *sep1 = strchr(rad, ';');
         if (sep1 == NULL) {
-            fprintf(stderr, "Varning: Ogiltig rad i kortfil hoppas over.\n");
+            fprintf(stderr, "Varning: Ogiltig rad %zu i kortfil (saknar avgransare).\n", radnummer);
             continue;
         }
         *sep1 = '\0';
 
         char *sep2 = strchr(sep1 + 1, ';');
         if (sep2 == NULL) {
-            fprintf(stderr, "Varning: Ogiltig rad i kortfil hoppas over.\n");
+            fprintf(stderr, "Varning: Ogiltig rad %zu i kortfil (saknar falt).\n", radnummer);
             continue;
         }
         *sep2 = '\0';
+
+        if (strchr(sep2 + 1, ';') != NULL) {
+            fprintf(stderr, "Varning: Ogiltig rad %zu i kortfil (for manga falt).\n", radnummer);
+            continue;
+        }
 
         const char *kortnummer = rad;
         const char *behorighet_str = sep1 + 1;
         const char *datum = sep2 + 1;
 
-        if (!giltigt_kortnummer(kortnummer) || strlen(kortnummer) >= KORTNUMMER_MAX ||
-            (strcmp(behorighet_str, "0") != 0 && strcmp(behorighet_str, "1") != 0) ||
-            datum[0] == '\0' || strlen(datum) >= DATUM_MAX) {
-            fprintf(stderr, "Varning: Korrupt post i kortfil ignorerades.\n");
+        if (!giltigt_kortnummer(kortnummer)) {
+            fprintf(stderr, "Varning: Ogiltigt kortnummer pa rad %zu ignorerades.\n", radnummer);
+            continue;
+        }
+
+        if (strcmp(behorighet_str, "0") != 0 && strcmp(behorighet_str, "1") != 0) {
+            fprintf(stderr, "Varning: Ogiltig behorighet '%s' pa rad %zu ignorerades.\n",
+                    behorighet_str, radnummer);
+            continue;
+        }
+
+        if (!giltigt_datum_format(datum)) {
+            fprintf(stderr, "Varning: Ogiltigt datum '%s' pa rad %zu ignorerades.\n",
+                    datum, radnummer);
             continue;
         }
 
         if (hitta_kort_index(lista, kortnummer) != -1) {
-            fprintf(stderr, "Varning: Dubblettkort '%s' i fil ignorerades.\n", kortnummer);
+            fprintf(stderr, "Varning: Dubblettkort '%s' pa rad %zu ignorerades.\n",
+                    kortnummer, radnummer);
             continue;
         }
 
@@ -214,6 +265,12 @@ int ladda_kort(Kortlista *lista) {
                                 : BEHORIGHET_INGEN;
         initiera_kort(&lista->kort[lista->antal], kortnummer, status, datum);
         lista->antal++;
+    }
+
+    if (ferror(fp)) {
+        perror("Fel vid lasning av kortfil");
+        fclose(fp);
+        return 0;
     }
 
     fclose(fp);

@@ -2,7 +2,7 @@
 #define KORTLISTA_H
 
 #include <stddef.h>
-#include "Passerkort.h"
+#include "passerkort.h"
 
 typedef enum {
     LAGG_TILL_OK = 1,

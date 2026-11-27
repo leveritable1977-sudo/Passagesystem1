@@ -8,7 +8,7 @@
 #define KORTFIL "kortregister.txt"
 
 static void skriv_meny(void) {
-    printf("\n=== Passagesystem - Huvudmeny (max %d tecken) ===\n", KORTNUMMER_MAX - 1);
+    printf("\n=== Passagesystem - Huvudmeny (max 5 tecken) ===\n");
     printf("1. Oppna dorren pa distans\n");
     printf("2. Lista samtliga kort\n");
     printf("3. Lagg till ett nytt kort\n");
@@ -21,16 +21,14 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
     char kortnummer[KORTNUMMER_MAX];
     int behorighet_val = 0;
 
-    printf("Ange kortnummer (1-%d tecken, A-Z/a-z/0-9): ", KORTNUMMER_MAX - 1);
+    printf("Ange kortnummer (1-5 tecken, A-Z/a-z/0-9): ");
     if (!las_rad(kortnummer, sizeof(kortnummer))) {
-        printf("Ogiltig eller for lang inmatning (max %zu tecken i buffert).\n",
-               (size_t)(KORTNUMMER_MAX - 1));
+        printf("Ogiltig eller for lang inmatning (max 5 tecken).\n");
         return;
     }
 
     if (!giltigt_kortnummer(kortnummer)) {
-        printf("Ogiltigt kortnummer. Maste vara 1-%d tecken (A-Z, a-z, 0-9).\n",
-               KORTNUMMER_MAX - 1);
+        printf("Ogiltigt kortnummer. Maste vara 1-5 tecken (A-Z, a-z, 0-9).\n");
         return;
     }
 
@@ -70,12 +68,36 @@ static void hantera_lagg_till_kort(Kortlista *lista) {
     }
 }
 
+static void hantera_andra_behorighet(Kortlista *lista) {
+    char kortnummer[KORTNUMMER_MAX];
+
+    printf("Ange kortnummer for att andra behorighet: ");
+    if (!las_rad(kortnummer, sizeof(kortnummer))) {
+        printf("Ogiltig eller for lang inmatning (max 5 tecken).\n");
+        return;
+    }
+
+    if (!giltigt_kortnummer(kortnummer)) {
+        printf("Ogiltigt kortnummer. Maste vara 1-5 tecken (A-Z, a-z, 0-9).\n");
+        return;
+    }
+
+    if (andra_behorighet(lista, kortnummer)) {
+        printf("Behorigheten for kort '%s' har andrats.\n", kortnummer);
+        if (!spara_kort(lista)) {
+            fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
+        }
+    } else {
+        printf("Kunde inte andra behorighet (kortet hittades inte).\n");
+    }
+}
+
 static void hantera_kortskanning(const Kortlista *lista) {
     char testkort[KORTNUMMER_MAX];
 
     printf("Ange kortnummer att testa vid dorren: ");
     if (!las_rad(testkort, sizeof(testkort))) {
-        printf("Kunde inte lasa kortnummer (for lang inmatning).\n");
+        printf("Statuslampa: ROD - ogiltig eller for lang inmatning (max 5 tecken).\n");
         return;
     }
 
@@ -83,17 +105,18 @@ static void hantera_kortskanning(const Kortlista *lista) {
 
     switch (resultat) {
         case PASSAGE_BEVILJAD:
-            printf("Passage beviljad for kort %s.\n", testkort);
+            printf("Statuslampa: GRON - passage beviljad for kort %s.\n", testkort);
             break;
         case PASSAGE_NEKAD_INAKTIV:
-            printf("Passage nekad: kort %s har ingen aktiv behorighet.\n", testkort);
+            printf("Statuslampa: ROD - passage nekad: kort %s har ingen aktiv behorighet.\n", testkort);
             break;
         case PASSAGE_NEKAD_EJ_REGISTRERAT:
-            printf("Passage nekad: kortnummer %s ar inte registrerat.\n", testkort);
+            printf("Statuslampa: ROD - passage nekad: kortnummer %s ar okant (inte registrerat).\n",
+                   testkort);
             break;
         case PASSAGE_NEKAD_OGILTIG_INMATA:
         default:
-            printf("Passage nekad: inget kortnummer angivet.\n");
+            printf("Statuslampa: ROD - passage nekad: inget kortnummer angivet.\n");
             break;
     }
 }
@@ -121,11 +144,7 @@ int main(void) {
 
         switch (val) {
             case 1:
-                if (oppna_dorr_pa_distans()) {
-                    printf("Dorren oppnad pa distans.\n");
-                } else {
-                    printf("Kunde inte oppna dorren pa distans.\n");
-                }
+                oppna_dorr_pa_distans();
                 break;
 
             case 2:
@@ -136,23 +155,9 @@ int main(void) {
                 hantera_lagg_till_kort(&lista);
                 break;
 
-            case 4: {
-                char kortnummer[KORTNUMMER_MAX];
-                printf("Ange kortnummer for att andra behorighet: ");
-                if (las_rad(kortnummer, sizeof(kortnummer))) {
-                    if (andra_behorighet(&lista, kortnummer)) {
-                        printf("Behorigheten for kort '%s' har andrats.\n", kortnummer);
-                        if (!spara_kort(&lista)) {
-                            fprintf(stderr, "Varning: Kortregistret kunde inte sparas till %s.\n", KORTFIL);
-                        }
-                    } else {
-                        printf("Kunde inte andra behorighet (kortet hittades inte).\n");
-                    }
-                } else {
-                    printf("Kunde inte lasa kortnummer.\n");
-                }
+            case 4:
+                hantera_andra_behorighet(&lista);
                 break;
-            }
 
             case 5:
                 hantera_kortskanning(&lista);

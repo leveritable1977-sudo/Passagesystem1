@@ -1,4 +1,3 @@
-Makefile
 CC        := gcc
 CFLAGS    := -std=c11 -Wall -Wextra -Wpedantic -g -Iinclude -MMD -MP
 

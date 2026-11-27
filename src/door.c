@@ -1,12 +1,28 @@
+#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "door.h"
+
+static void paxa_tre_sekunder(void) {
+    struct timespec vanta;
+    vanta.tv_sec = 3;
+    vanta.tv_nsec = 0;
+
+    while (nanosleep(&vanta, &vanta) != 0) {
+        /* fortsätt återstående tid om avbruten av signal */
+    }
+}
 
 const char *behorighet_till_text(Behorighet status) {
     return (status == BEHORIGHET_AKTIV) ? "Aktiv" : "Ingen";
 }
 
-int oppna_dorr_pa_distans(void) {
-    return 1;
+void oppna_dorr_pa_distans(void) {
+    printf("Dorren oppnad pa distans. Statuslampa: GRON (3 sekunder)...\n");
+    fflush(stdout);
+    paxa_tre_sekunder();
+    printf("Statuslampa: SLACKT (dorren aterstalld).\n");
 }
 
 PassageResultat kontrollera_passage(const Passerkort *kort, size_t antal, const char *kortnummer) {
